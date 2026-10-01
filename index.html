@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe Pro - Live Web Engine</title>
+    <title>MedScribe Pro - PDF Export Engine</title>
     
     <!-- Handwriting Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Shadows+Into+Light&family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -79,7 +79,7 @@
         .main-content { width: 100%; max-width: 800px; position: relative; }
         
         .notebook-paper {
-            background-color: var(--paper); width: 100%; min-height: 1000px;
+            background-color: var(--paper); width: 100%; min-height: 1056px; /* Standard Letter Height */
             padding: calc(var(--grid-size) * 2) 2rem calc(var(--grid-size) * 2) 5.5rem; 
             position: relative; box-sizing: border-box;
             border-radius: 4px 12px 12px 4px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
@@ -91,7 +91,7 @@
             );
             background-size: 100% var(--grid-size);
             background-position: 0 0;
-            display: none; overflow: hidden;
+            display: none;
         }
 
         .notebook-paper::before {
@@ -103,7 +103,7 @@
             font-size: 2.5rem; font-weight: 700; text-decoration: underline; text-align: center;
             line-height: calc(var(--grid-size) * 2); 
             margin: 0; padding: 0;
-            transform: translateY(var(--font-offset));
+            position: relative; top: var(--font-offset); /* Replaced transform for PDF stability */
             font-family: var(--font-family); color: var(--ink); mix-blend-mode: multiply;
         }
 
@@ -111,8 +111,8 @@
             font-family: var(--font-family); font-size: 1.6rem; color: var(--ink);
             line-height: var(--grid-size); 
             margin: 0; padding: 0; white-space: pre-wrap;
+            position: relative; top: var(--font-offset); /* Replaced transform for PDF stability */
             mix-blend-mode: multiply; 
-            transform: translateY(var(--font-offset));
             letter-spacing: var(--letter-spacing); transition: all 0.3s ease; word-break: break-word;
         }
         
@@ -241,14 +241,12 @@
         let isTyping = false;
         let currentFullText = "";
         
-        // Security logic to prevent XSS
         function sanitizeString(str) {
             const temp = document.createElement('div');
             temp.textContent = str;
             return temp.innerHTML;
         }
 
-        // PERFECT ALIGNMENT ENGINE: Corrects natural font baselines to sit exactly on the line
         function updateStyles() {
             const root = document.documentElement;
             const selectedFont = document.getElementById('fontStyle').value;
@@ -271,13 +269,14 @@
             if (isMessy) {
                 root.style.setProperty('--letter-spacing', '-1px');
                 notesContent.style.opacity = "0.85";
-                notesContent.style.transform = `translateY(calc(var(--font-offset) - 2px)) rotate(-0.5deg)`;
-                notesTopic.style.transform = `translateY(calc(var(--font-offset) - 2px)) rotate(-0.5deg)`;
+                // Only rotate, rely on 'top' property for vertical alignment
+                notesContent.style.transform = `rotate(-0.5deg)`;
+                notesTopic.style.transform = `rotate(-0.5deg)`;
             } else {
                 root.style.setProperty('--letter-spacing', 'normal');
                 notesContent.style.opacity = "1";
-                notesContent.style.transform = `translateY(var(--font-offset))`;
-                notesTopic.style.transform = `translateY(var(--font-offset))`;
+                notesContent.style.transform = `none`;
+                notesTopic.style.transform = `none`;
             }
         }
 
@@ -485,7 +484,7 @@
         }
 
         // --- TRUE PDF DOWNLOAD LOGIC (html2pdf) ---
-        function downloadPDF() {
+        async function downloadPDF() {
             const element = document.getElementById('notebook');
             const topic = document.getElementById('notesTopic').innerText || "Medical";
             const filename = `${topic.replace(/[^a-z0-9]/gi, '_')}_Notes.pdf`;
@@ -494,40 +493,58 @@
             const printBtns = document.querySelectorAll('.fab-btn-print');
             printBtns.forEach(btn => btn.innerText = "⏳ Generating File...");
 
-            // 1. Prepare element for capture (remove shadows/borders, disable editing)
+            // 1. Prepare element for capture
             disableEditing();
             const originalShadow = element.style.boxShadow;
             const originalRadius = element.style.borderRadius;
             element.style.boxShadow = 'none';
             element.style.borderRadius = '0';
             
-            // Temporarily disable mix-blend-mode to avoid html2canvas bugs rendering black blocks
+            // Fix for html2canvas blank text bug: 
+            // It completely fails to capture text that has mix-blend-mode applied.
             const content = document.getElementById('notesContent');
             const header = document.getElementById('notesTopic');
-            const originalBlendC = content.style.mixBlendMode;
-            const originalBlendH = header.style.mixBlendMode;
+            
+            const originalBlendC = window.getComputedStyle(content).mixBlendMode;
+            const originalBlendH = window.getComputedStyle(header).mixBlendMode;
+            
             content.style.mixBlendMode = 'normal';
             header.style.mixBlendMode = 'normal';
+            
+            // Temporarily disable rotation if messy mode is on to prevent text clipping in PDF
+            const originalTransform = content.style.transform;
+            content.style.transform = 'none';
+            header.style.transform = 'none';
 
-            // 2. Configure html2pdf settings (Splits into standard Letter sized pages)
+            // 2. CRITICAL: Wait 250ms for the browser to visually repaint the normal text styles
+            await new Promise(resolve => setTimeout(resolve, 250));
+
+            // 3. Configure html2pdf settings
             const opt = {
-                margin:       [0, 0, 0, 0], // No margins, let the CSS paper handle padding
+                margin:       [0, 0, 0, 0], // CSS handles paper padding natively
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: element.scrollWidth },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // 3. Generate and Download
+            // 4. Generate and Download
             html2pdf().set(opt).from(element).save().then(() => {
                 // Restore original UI states
                 element.style.boxShadow = originalShadow;
                 element.style.borderRadius = originalRadius;
                 content.style.mixBlendMode = originalBlendC;
                 header.style.mixBlendMode = originalBlendH;
+                content.style.transform = originalTransform;
+                header.style.transform = originalTransform;
                 
                 enableEditing();
                 printBtns.forEach(btn => btn.innerText = "🖨️ Save as PDF");
+            }).catch(err => {
+                console.error("PDF Generation Error:", err);
+                alert("An error occurred while generating the PDF.");
+                printBtns.forEach(btn => btn.innerText = "🖨️ Save as PDF");
+                enableEditing();
             });
         }
 
