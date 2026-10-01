@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe Pro - Top 1% Clinical Notes</title>
+    <title>MedScribe Pro - Smart Web Engine</title>
     
     <!-- Handwriting Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Shadows+Into+Light&family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -13,25 +13,18 @@
 
     <style>
         :root {
-            --primary: #2563EB;
-            --primary-hover: #1D4ED8;
-            --bg: #F1F5F9;
-            --paper: #FDFBF7; 
-            --line-color: #94A3B8;
-            --margin-color: #F87171;
-            --ink: #0F172A;
+            --primary: #2563EB; --primary-hover: #1D4ED8;
+            --bg: #F1F5F9; --paper: #FDFBF7; 
+            --line-color: #94A3B8; --margin-color: #F87171; --ink: #0F172A;
             --font-family: 'Caveat', cursive;
-            --line-height: 2.2rem; 
-            --letter-spacing: normal;
+            --line-height: 2.2rem; --letter-spacing: normal;
         }
 
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            margin: 0; padding: 2rem 1rem;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+            background-color: var(--bg); margin: 0; padding: 2rem 1rem;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* --- Layout & Controls --- */
@@ -40,9 +33,7 @@
             flex-direction: row; align-items: flex-start; justify-content: center;
         }
 
-        .sidebar {
-            width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 1rem;
-        }
+        .sidebar { width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 1rem; }
 
         .panel {
             background: white; padding: 1.5rem; border-radius: 12px;
@@ -55,15 +46,13 @@
         
         input[type="text"], select {
             width: 100%; padding: 0.6rem; border: 2px solid #E2E8F0;
-            border-radius: 6px; box-sizing: border-box; font-size: 0.95rem;
+            border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; background: white;
         }
         input:focus, select:focus { outline: none; border-color: var(--primary); }
 
-        /* Toggles */
         .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
         .checkbox-label { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.85rem; }
 
-        /* Buttons */
         button {
             background-color: var(--primary); color: white; border: none;
             padding: 0.75rem; border-radius: 6px; font-weight: 600; cursor: pointer;
@@ -75,12 +64,10 @@
         .btn-stop { background-color: #EF4444; display: none; margin-top: 0.5rem;}
         .btn-stop:hover { background-color: #DC2626; }
 
-        /* History List */
         .history-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
         .history-item {
             padding: 0.5rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;
-            font-size: 0.85rem; cursor: pointer; transition: 0.2s;
-            word-break: break-word;
+            font-size: 0.85rem; cursor: pointer; transition: 0.2s; word-break: break-word;
         }
         .history-item:hover { background: #E2E8F0; border-color: var(--primary); }
 
@@ -93,8 +80,7 @@
             border-radius: 4px 12px 12px 4px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
             background-image: repeating-linear-gradient( transparent, transparent calc(var(--line-height) - 1px),
                 var(--line-color) calc(var(--line-height) - 1px), var(--line-color) var(--line-height) );
-            background-position: 0 4.8rem; display: none;
-            overflow: hidden; /* Prevents long unbreakable words from expanding the div */
+            background-position: 0 4.8rem; display: none; overflow: hidden;
         }
 
         .notebook-paper::before {
@@ -106,17 +92,15 @@
             font-family: var(--font-family); font-size: 1.6rem; color: var(--ink);
             margin: 0; line-height: var(--line-height); white-space: pre-wrap;
             mix-blend-mode: multiply; transform: translateY(-6px);
-            letter-spacing: var(--letter-spacing); transition: all 0.3s ease;
-            word-break: break-word; /* Edge case: Long unspaced words */
+            letter-spacing: var(--letter-spacing); transition: all 0.3s ease; word-break: break-word;
         }
         
-        /* Editable area styling */
         .handwriting-text[contenteditable="true"] { outline: none; }
         .handwriting-text[contenteditable="true"]:focus { background-color: rgba(255,255,255,0.4); border-radius: 8px; }
 
-        .topic-header { font-size: 2.5rem; font-weight: 700; text-decoration: underline; margin-bottom: var(--line-height); }
+        .topic-header { font-size: 2.5rem; font-weight: 700; text-decoration: underline; margin-bottom: var(--line-height); text-align: center;}
 
-        /* --- Action Bars --- */
+        /* --- Action Bars & Utils --- */
         .fab-bar {
             display: none; position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
@@ -128,23 +112,19 @@
 
         .desktop-actions { display: flex; gap: 1rem; margin-top: 1rem; }
         .desktop-actions button { display: none; }
-
         .loader { display: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-top: 1rem; text-align: center;}
+        
+        #errorMsg { color: #DC2626; font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 0.5rem; display: none; }
 
         /* --- Responsive Design --- */
-        @media (max-width: 900px) {
-            .app-container { flex-direction: column; align-items: center; }
-            .sidebar { max-width: 100%; }
-        }
-
+        @media (max-width: 900px) { .app-container { flex-direction: column; align-items: center; } .sidebar { max-width: 100%; } }
         @media (max-width: 600px) {
             body { padding: 1rem 0.5rem; margin-bottom: 80px; }
-            .notebook-paper { padding: 4rem 1rem 6rem 2.5rem; } /* Extra bottom padding so FAB doesn't cover text */
+            .notebook-paper { padding: 4rem 1rem 6rem 2.5rem; }
             .notebook-paper::before { left: 1.5rem; }
             .desktop-actions { display: none !important; }
             .fab-bar.active { display: flex; }
         }
-
         @media print {
             body { background: none; padding: 0; margin: 0; }
             .sidebar, .fab-bar, .desktop-actions { display: none !important; }
@@ -160,31 +140,32 @@
         <div class="sidebar">
             <div class="panel">
                 <h2>🩺 MedScribe Pro</h2>
-                <p style="color: #64748B; margin-top: -10px; font-size: 0.85rem;">Generate high-yield clinical notes</p>
+                <p style="color: #64748B; margin-top: -10px; font-size: 0.85rem;">Smart search extracts notes directly from live medical databases.</p>
 
                 <div class="form-group">
-                    <label>Disease / Medical Topic</label>
-                    <input type="text" id="topicName" placeholder="e.g. Aortic Stenosis" maxlength="60">
+                    <label>Disease / Medical Keyword</label>
+                    <input type="text" id="topicName" placeholder="e.g. Diabetics, Heart attack..." maxlength="60">
                 </div>
 
                 <div class="form-group">
                     <label>Include Sections:</label>
                     <div class="checkbox-grid">
-                        <label class="checkbox-label"><input type="checkbox" id="chkDef" checked> Definition & Epi</label>
-                        <label class="checkbox-label"><input type="checkbox" id="chkPatho" checked> Pathophysiology</label>
-                        <label class="checkbox-label"><input type="checkbox" id="chkClin" checked> Clinical Features</label>
-                        <label class="checkbox-label"><input type="checkbox" id="chkDiag" checked> Investigations</label>
-                        <label class="checkbox-label"><input type="checkbox" id="chkPharm" checked> Pharmacology/Tx</label>
-                        <label class="checkbox-label"><input type="checkbox" id="chkComp"> Complications</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkDef" value="Definition" checked> Definition/Gen</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkPatho" value="Pathophysiology" checked> Pathophysiology</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkClin" value="Clinical Features" checked> Clinical Features</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkDiag" value="Investigations" checked> Investigations</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkPharm" value="Management" checked> Management</label>
+                        <label class="checkbox-label"><input type="checkbox" id="chkComp" value="Complications" checked> Complications</label>
                     </div>
                 </div>
 
-                <button id="generateBtn" onclick="startGeneration()">✍️ Generate Notes</button>
+                <button id="generateBtn" onclick="startGeneration()">🌐 Smart Search & Generate</button>
                 <button id="stopBtn" class="btn-stop" onclick="stopGeneration()">⏹ Stop Typing</button>
-                <div id="loader" class="loader">🧠 Consulting medical database...</div>
+                
+                <div id="loader" class="loader">🌐 Finding best match... Please wait.</div>
+                <div id="errorMsg"></div>
             </div>
 
-            <!-- Customization Panel -->
             <div class="panel">
                 <h3>🎨 Customization</h3>
                 <div class="form-group">
@@ -213,12 +194,9 @@
                 </div>
             </div>
 
-            <!-- History Panel -->
             <div class="panel">
                 <h3>📂 Recent Notes</h3>
-                <div id="historyList" class="history-list">
-                    <!-- History items injected here -->
-                </div>
+                <div id="historyList" class="history-list"></div>
             </div>
         </div>
 
@@ -248,15 +226,14 @@
         let isTyping = false;
         let currentFullText = "";
         
-        // --- SECURITY / UTILITIES ---
-        // Sanitizes HTML to prevent XSS if user types script tags
+        // Security logic to prevent XSS
         function sanitizeString(str) {
             const temp = document.createElement('div');
             temp.textContent = str;
             return temp.innerHTML;
         }
 
-        // --- UI CUSTOMIZATION ---
+        // Font and CSS update logic
         function updateStyles() {
             const root = document.documentElement;
             root.style.setProperty('--ink', document.getElementById('inkColor').value);
@@ -276,37 +253,142 @@
             }
         }
 
-        // --- CORE LOGIC ---
-        function startGeneration() {
-            let topicInput = document.getElementById('topicName').value.trim();
+        // --- SMART LIVE WIKIPEDIA SEARCH LOGIC ---
+        async function fetchLiveMedicalData(topic) {
+            // STEP 1: Search for the closest matching medical term (Fuzzy Match)
+            const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&utf8=&format=json&origin=*`;
+            const searchRes = await fetch(searchUrl);
+            if (!searchRes.ok) throw new Error("Failed to connect to Wikipedia API.");
+            const searchData = await searchRes.json();
+
+            if (!searchData.query.search || searchData.query.search.length === 0) {
+                throw new Error(`Could not find any medical topics related to "${topic}". Try checking your spelling.`);
+            }
+
+            // STEP 2: Loop through the top 3 results to find an actual article (skip disambiguation pages)
+            for (let i = 0; i < Math.min(3, searchData.query.search.length); i++) {
+                let bestMatchTitle = searchData.query.search[i].title;
+
+                const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(bestMatchTitle)}&format=json&origin=*`;
+                const extractRes = await fetch(extractUrl);
+                const extractData = await extractRes.json();
+                const pages = extractData.query.pages;
+                const pageId = Object.keys(pages)[0];
+
+                if (pageId !== "-1") {
+                    const extract = pages[pageId].extract;
+                    
+                    // If it's not a disambiguation page and has enough content, return it!
+                    if (!extract.includes("may refer to:") && extract.length > 250) {
+                        return {
+                            text: extract,
+                            actualTitle: bestMatchTitle // We return the correct title to fix the UI!
+                        };
+                    }
+                }
+            }
             
-            // Edge Case: Empty input
-            if (!topicInput) { 
-                alert("Please enter a medical topic."); 
-                return; 
+            throw new Error(`The term "${topic}" is too vague and refers to multiple things. Try to be more specific.`);
+        }
+
+        // --- INTELLIGENT SENTENCE EXTRACTION & CATEGORIZATION ---
+        function extractNotesFromText(rawText, actualTitle, activeSections) {
+            // Remove Wikipedia section headers (e.g., "== Signs and symptoms ==")
+            let cleanText = rawText.replace(/==+.*?==+/g, ''); 
+            
+            // Split into sentences using punctuation followed by capital letters
+            let sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [];
+            sentences = sentences.map(s => s.trim()).filter(s => s.length > 15);
+            
+            let extractedData = {
+                "Definition": [], "Pathophysiology": [], "Clinical Features": [], 
+                "Investigations": [], "Management": [], "Complications": [], "General": []
+            };
+
+            const titleLower = actualTitle.toLowerCase();
+
+            // Analyze every sentence and categorize using NLP keywords
+            for (let i = 0; i < sentences.length; i++) {
+                let noteChunk = sentences[i];
+                let lowerNote = noteChunk.toLowerCase();
+
+                // Grab next sentence for context if current is too short
+                if (i + 1 < sentences.length && sentences[i+1].length < 100) {
+                    noteChunk += " " + sentences[i+1];
+                    i++; 
+                }
+
+                // Categorization Logic
+                if (activeSections.includes("Definition") && i < 5) {
+                    // First few sentences of a wiki article usually define the condition
+                    extractedData["Definition"].push(noteChunk);
+                } else if (activeSections.includes("Pathophysiology") && lowerNote.match(/\b(pathology|cause|mechan|etiolog|due to|result in|mutat|genetic)\b/)) {
+                    extractedData["Pathophysiology"].push(noteChunk);
+                } else if (activeSections.includes("Clinical Features") && lowerNote.match(/\b(symptom|sign|present|pain|exam|complain|clinic|syndrome)\b/)) {
+                    extractedData["Clinical Features"].push(noteChunk);
+                } else if (activeSections.includes("Investigations") && lowerNote.match(/\b(test|mri|ct |x-?ray|blood|level|diagnos|investig|scan|assay|biopsy)\b/)) {
+                    extractedData["Investigations"].push(noteChunk);
+                } else if (activeSections.includes("Management") && lowerNote.match(/\b(treat|therap|medic|manag|drug|dose|surg|iv|oral|prescrib)\b/)) {
+                    extractedData["Management"].push(noteChunk);
+                } else if (activeSections.includes("Complications") && lowerNote.match(/\b(complicat|risk|fatal|death|prognos|surviv|severe)\b/)) {
+                    extractedData["Complications"].push(noteChunk);
+                } else {
+                    // General fallback if it contains the actual corrected title
+                    if (lowerNote.includes(titleLower)) {
+                        extractedData["General"].push(noteChunk);
+                    }
+                }
             }
-            // Edge Case: Too long (already capped by HTML maxlength, but double checking)
-            if (topicInput.length > 60) {
-                topicInput = topicInput.substring(0, 60);
+
+            // Format into final notebook string
+            let finalOutput = "";
+            let secCount = 1;
+
+            activeSections.forEach(section => {
+                let sectionData = [...new Set(extractedData[section])]; // Deduplicate
+                if (sectionData.length > 0) {
+                    finalOutput += `${secCount++}. ${section.toUpperCase()}\n`;
+                    // Limit to 4 most relevant bullet points per section to fit nicely on the page
+                    sectionData.slice(0, 4).forEach(point => { 
+                        finalOutput += `• ${point}\n`;
+                    });
+                    finalOutput += "\n";
+                }
+            });
+
+            // Fallback: If keyword sections were empty, dump general facts
+            if (finalOutput.trim() === "") {
+                let generalData = [...new Set(extractedData["General"])];
+                if (generalData.length > 0) {
+                    finalOutput += `${secCount}. GENERAL FINDINGS\n`;
+                    generalData.slice(0, 6).forEach(point => { finalOutput += `• ${point}\n`; });
+                    finalOutput += "\n";
+                }
             }
 
-            const topic = sanitizeString(topicInput.charAt(0).toUpperCase() + topicInput.slice(1));
+            return finalOutput.trim() === "" ? null : finalOutput;
+        }
 
-            const sections = [];
-            if(document.getElementById('chkDef').checked) sections.push("Definition & Epidemiology");
-            if(document.getElementById('chkPatho').checked) sections.push("Pathophysiology");
-            if(document.getElementById('chkClin').checked) sections.push("Clinical Features");
-            if(document.getElementById('chkDiag').checked) sections.push("Investigations & Diagnosis");
-            if(document.getElementById('chkPharm').checked) sections.push("Pharmacology & Management");
-            if(document.getElementById('chkComp').checked) sections.push("Complications & Prognosis");
+        // --- UI TRIGGER LOGIC ---
+        async function startGeneration() {
+            let topicInput = document.getElementById('topicName').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+            
+            if (!topicInput) { alert("Please enter a medical topic keyword."); return; }
+            if (topicInput.length > 60) topicInput = topicInput.substring(0, 60);
 
-            // Edge Case: No sections checked
-            if (sections.length === 0) {
-                alert("Please check at least one section to generate notes.");
-                return;
+            const topic = sanitizeString(topicInput);
+
+            // Get active sections
+            const checkboxes = document.querySelectorAll('.checkbox-grid input[type="checkbox"]:checked');
+            const activeSections = Array.from(checkboxes).map(cb => cb.value);
+
+            if (activeSections.length === 0) {
+                alert("Please check at least one section."); return;
             }
 
-            // Lock UI & Reset State
+            // Lock UI & Setup Load State
             document.getElementById('generateBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'block';
             document.getElementById('loader').style.display = 'block';
@@ -315,41 +397,69 @@
             clearTimeout(typingTimeout);
             isTyping = true;
 
-            currentFullText = generateLocalNote(topic, sections);
-            
-            setTimeout(() => {
+            try {
+                // 1. Fetch live text and get the CORRECTED title from the smart search
+                const result = await fetchLiveMedicalData(topic);
+                const rawLiveText = result.text;
+                const correctedTitle = result.actualTitle; // e.g. "Diabetics" -> "Diabetes"
+                
+                // 2. Extract and format the notes using the corrected title
+                let extractedNotes = extractNotesFromText(rawLiveText, correctedTitle, activeSections);
+
+                if (!extractedNotes) {
+                    throw new Error(`Could not generate structured clinical notes for "${correctedTitle}". Try a more specific term.`);
+                }
+
+                // 3. Append Final References Section (Live Source Citation)
+                extractedNotes += `\n[REFERENCES & EVIDENCE]\n`;
+                extractedNotes += `1. Data extracted live from Open Medical Databases via Wikipedia API.\n`;
+                extractedNotes += `2. Source URL: https://en.wikipedia.org/wiki/${encodeURIComponent(correctedTitle)}`;
+
+                currentFullText = extractedNotes;
+
+                // 4. Update UI with the CORRECTED title
+                document.getElementById('topicName').value = correctedTitle; // Auto-correct the input box
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('notebook').style.display = 'block';
-                document.getElementById('notesTopic').innerText = topic;
+                document.getElementById('notesTopic').innerText = correctedTitle;
                 
                 const contentDiv = document.getElementById('notesContent');
-                contentDiv.innerText = ""; // Clear via innerText
+                contentDiv.innerText = ""; 
 
+                // 5. Animate typing
                 const words = currentFullText.split(/(?= |\n)/);
-                let i = 0;
-                let buildingText = "";
+                let i = 0; let buildingText = "";
                 
                 function typeWriter() {
-                    if (!isTyping) return; // Prevent memory leak if stopped early
+                    if (!isTyping) return; 
                     if (i < words.length) {
                         buildingText += words[i];
-                        // Using textContent prevents XSS HTML execution during typing
-                        contentDiv.textContent = buildingText;
+                        contentDiv.textContent = buildingText; 
                         i++;
-                        typingTimeout = setTimeout(typeWriter, 15);
+                        typingTimeout = setTimeout(typeWriter, 12); // Typing speed
                     } else {
-                        finishGeneration(topic, currentFullText);
+                        finishGeneration(correctedTitle, currentFullText);
                     }
                 }
                 typeWriter();
-            }, 600);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('generateBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                errorMsg.innerText = "Error: " + err.message;
+                errorMsg.style.display = 'block';
+                isTyping = false;
+            }
         }
 
         function stopGeneration() {
             isTyping = false;
             clearTimeout(typingTimeout);
             document.getElementById('notesContent').textContent = currentFullText;
-            finishGeneration(document.getElementById('topicName').value.trim(), currentFullText);
+            const currentTitle = document.getElementById('notesTopic').innerText;
+            finishGeneration(currentTitle, currentFullText);
         }
 
         function finishGeneration(topic, text) {
@@ -360,7 +470,6 @@
             saveToHistory(topic, text);
         }
 
-        // --- EDITING & ACTIONS ---
         function enableEditing() {
             document.getElementById('notesContent').setAttribute('contenteditable', 'true');
             document.getElementById('notesTopic').setAttribute('contenteditable', 'true');
@@ -374,50 +483,41 @@
             document.getElementById('mobileFab').classList.add('active');
         }
 
-        // --- EXPORT TO IMAGE (html2canvas) ---
         function exportImage() {
             const notebook = document.getElementById('notebook');
             const content = document.getElementById('notesContent');
             const header = document.getElementById('notesTopic');
             
-            // Edge Case: Disable contenteditable so cursor/selection box doesn't appear in photo
+            // Hide cursor/selection before taking screenshot
             disableEditing();
-
-            // Edge Case: html2canvas struggles with mix-blend-mode. Temporarily disable.
+            
             const originalBlend = content.style.mixBlendMode;
             content.style.mixBlendMode = 'normal';
-
-            window.scrollTo(0,0); // Prevent scroll clipping bugs in capture
+            window.scrollTo(0,0); 
 
             html2canvas(notebook, { scale: 2, useCORS: true }).then(canvas => {
                 let link = document.createElement('a');
-                link.download = `${header.innerText.replace(/[^a-z0-9]/gi, '_')}_Notes.png`; // Sanitize filename
+                link.download = `${header.innerText.replace(/[^a-z0-9]/gi, '_')}_Notes.png`; 
                 link.href = canvas.toDataURL("image/png");
                 link.click();
                 
-                // Restore settings
                 content.style.mixBlendMode = originalBlend;
                 enableEditing();
             }).catch(err => {
-                console.error("Image export failed:", err);
                 alert("Failed to generate image. Please try 'Print / PDF' instead.");
                 enableEditing();
             });
         }
 
-        // --- LOCAL STORAGE HISTORY ---
         function saveToHistory(topic, text) {
             try {
                 let history = JSON.parse(localStorage.getItem('medNotesHistory')) || [];
                 history = history.filter(item => item.topic.toLowerCase() !== topic.toLowerCase());
                 history.unshift({ topic: topic, text: text, date: new Date().toLocaleDateString() });
                 if (history.length > 10) history.pop(); 
-                
                 localStorage.setItem('medNotesHistory', JSON.stringify(history));
                 loadHistoryUI();
-            } catch (e) {
-                console.warn("Local storage unavailable (Private Mode) or Quota Exceeded.", e);
-            }
+            } catch (e) {}
         }
 
         function loadHistoryUI() {
@@ -425,16 +525,13 @@
                 const history = JSON.parse(localStorage.getItem('medNotesHistory')) || [];
                 const container = document.getElementById('historyList');
                 container.innerHTML = "";
-                
                 if (history.length === 0) {
                     container.innerHTML = "<div style='color: #94A3B8; font-size: 0.85rem;'>No recent notes.</div>";
                     return;
                 }
-
                 history.forEach(item => {
                     let div = document.createElement('div');
                     div.className = "history-item";
-                    // InnerHTML is safe here because we sanitized the topic string before saving
                     div.innerHTML = `<strong>${item.topic}</strong><br><small>${item.date}</small>`;
                     div.onclick = () => loadFromHistory(item.topic, item.text);
                     container.appendChild(div);
@@ -445,54 +542,18 @@
         }
 
         function loadFromHistory(topic, text) {
-            clearTimeout(typingTimeout);
-            isTyping = false; // Stop any ongoing animation instantly
-            
+            clearTimeout(typingTimeout); isTyping = false; 
             document.getElementById('topicName').value = topic;
             document.getElementById('notebook').style.display = 'block';
             document.getElementById('notesTopic').innerText = topic;
             document.getElementById('notesContent').textContent = text;
-            
             currentFullText = text;
             document.getElementById('loader').style.display = 'none';
             finishGeneration(topic, text);
         }
 
-        // Initialize UI on load
         window.onload = () => { loadHistoryUI(); updateStyles(); }
 
-        // --- LOCAL GENERATION ENGINE ---
-        function generateLocalNote(topic, sections) {
-            let note = "";
-            let secCount = 1;
-
-            if (sections.includes("Definition & Epidemiology")) {
-                note += `${secCount++}. DEFINITION & EPIDEMIOLOGY\n• ${topic} is a significant clinical entity requiring comprehensive medical evaluation.\n• It is characterized by specific structural or functional alterations in the affected physiological system.\n• Epidemiology: Affects specific demographics depending on genetic, environmental, and lifestyle factors.\n\n`;
-            }
-            if (sections.includes("Pathophysiology")) {
-                note += `${secCount++}. PATHOPHYSIOLOGY\n• Etiology can be classified into congenital, infectious, inflammatory, neoplastic, or idiopathic causes.\n• Pathogenesis involves cellular injury, inflammatory cascades, or metabolic derangements related to ${topic}.\n• Over time, this leads to tissue remodeling, fibrosis, or systemic dissemination.\n• Key mechanism: Disruption of normal homeostasis leading to the classic clinical presentation.\n\n`;
-            }
-            if (sections.includes("Clinical Features")) {
-                note += `${secCount++}. CLINICAL FEATURES (HISTORY & EXAM)\n• Patients classically present with a gradual or acute onset of symptoms.\n• Subjective (Symptoms): Pain, fatigue, systemic signs of inflammation, or localized deficits.\n• Objective (Signs): Elicited during physical examination (inspection, palpation, percussion, auscultation).\n• Red Flag Signs must be identified promptly to prevent irreversible morbidity.\n\n`;
-            }
-            if (sections.includes("Investigations & Diagnosis")) {
-                note += `${secCount++}. DIAGNOSTIC WORKUP & INVESTIGATIONS\n• Routine Bloods: CBC, U&Es, LFTs, CRP/ESR.\n• Specific Biomarkers: Targeted tests specifically elevated or altered in ${topic}.\n• Imaging: Ultrasound (first-line for many organs), CT scan (cross-sectional anatomy), or MRI (soft tissue/neuro).\n• Histopathology: Biopsy remains the definitive gold standard if applicable.\n\n`;
-            }
-            if (sections.includes("Pharmacology & Management")) {
-                note += `${secCount++}. CLINICAL MANAGEMENT & PROTOCOL\n• Conservative: Lifestyle modifications, physical therapy, and risk factor optimization.\n• Medical / Pharmacological: Targeted drug therapy to correct the underlying mechanism or manage symptoms.\n• Surgical / Interventional: Indicated when medical management fails or in acute emergencies.\n\n`;
-            }
-            if (sections.includes("Complications & Prognosis")) {
-                note += `${secCount++}. COMPLICATIONS & PROGNOSIS\n• If left untreated, ${topic} can lead to progressive organ failure.\n• Risk of secondary infections or systemic multi-organ involvement.\n• Prognosis depends heavily on the stage of diagnosis and patient comorbidities.\n• Requires regular multidisciplinary follow-up.\n\n`;
-            }
-            
-            // --- ADDED REFERENCES SECTION ---
-            note += `[REFERENCES & FURTHER READING]\n`;
-            note += `1. Harrison's Principles of Internal Medicine, 21st Edition.\n`;
-            note += `2. Robbins & Cotran Pathologic Basis of Disease, 10th Edition.\n`;
-            note += `3. Standard Clinical Guidelines (UpToDate / NICE).`;
-            
-            return note;
-        }
     </script>
 </body>
 </html>
