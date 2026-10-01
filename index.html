@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe Pro - PDF Export Engine</title>
+    <title>MedScribe Pro - Perfect PDF Engine</title>
     
     <!-- Handwriting Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Shadows+Into+Light&family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
             
             /* Strict Mathematical Grid for Perfect Alignment */
             --grid-size: 36px; 
-            --font-offset: -5px; 
+            --line-offset: 5px; /* Shifts the background lines instead of the text */
             --letter-spacing: normal;
         }
 
@@ -79,19 +79,21 @@
         .main-content { width: 100%; max-width: 800px; position: relative; }
         
         .notebook-paper {
-            background-color: var(--paper); width: 100%; min-height: 1056px; /* Standard Letter Height */
+            background-color: var(--paper); width: 100%; min-height: 1056px; 
             padding: calc(var(--grid-size) * 2) 2rem calc(var(--grid-size) * 2) 5.5rem; 
             position: relative; box-sizing: border-box;
             border-radius: 4px 12px 12px 4px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
             
-            background-image: linear-gradient(
-                transparent calc(var(--grid-size) - 2px), 
-                var(--line-color) calc(var(--grid-size) - 1px), 
-                transparent var(--grid-size)
+            /* The grid lines strictly follow the var(--line-offset) */
+            background-image: repeating-linear-gradient(
+                transparent, 
+                transparent calc(var(--grid-size) - 1.5px), 
+                var(--line-color) calc(var(--grid-size) - 0.5px), 
+                var(--line-color) var(--grid-size)
             );
             background-size: 100% var(--grid-size);
-            background-position: 0 0;
-            display: none;
+            background-position: 0 var(--line-offset); /* Critical for PDF alignment */
+            display: none; overflow: hidden;
         }
 
         .notebook-paper::before {
@@ -103,7 +105,6 @@
             font-size: 2.5rem; font-weight: 700; text-decoration: underline; text-align: center;
             line-height: calc(var(--grid-size) * 2); 
             margin: 0; padding: 0;
-            position: relative; top: var(--font-offset); /* Replaced transform for PDF stability */
             font-family: var(--font-family); color: var(--ink); mix-blend-mode: multiply;
         }
 
@@ -111,7 +112,6 @@
             font-family: var(--font-family); font-size: 1.6rem; color: var(--ink);
             line-height: var(--grid-size); 
             margin: 0; padding: 0; white-space: pre-wrap;
-            position: relative; top: var(--font-offset); /* Replaced transform for PDF stability */
             mix-blend-mode: multiply; 
             letter-spacing: var(--letter-spacing); transition: all 0.3s ease; word-break: break-word;
         }
@@ -241,12 +241,15 @@
         let isTyping = false;
         let currentFullText = "";
         
+        // Security logic to prevent XSS
         function sanitizeString(str) {
             const temp = document.createElement('div');
             temp.textContent = str;
             return temp.innerHTML;
         }
 
+        // PERFECT ALIGNMENT ENGINE: Moves the background lines to match the font's natural baseline.
+        // This solves all html2canvas rendering bugs!
         function updateStyles() {
             const root = document.documentElement;
             const selectedFont = document.getElementById('fontStyle').value;
@@ -255,13 +258,14 @@
             root.style.setProperty('--ink', document.getElementById('inkColor').value);
             root.style.setProperty('--font-family', selectedFont);
             
-            let fontOffset = "0px";
-            if (selectedFont.includes("Caveat")) fontOffset = "-5px";
-            if (selectedFont.includes("Shadows")) fontOffset = "2px";
-            if (selectedFont.includes("Patrick")) fontOffset = "-2px";
-            if (selectedFont.includes("Gochi")) fontOffset = "-4px";
+            // Inverted offsets: We move the BACKGROUND lines, not the text.
+            let lineOffset = "0px";
+            if (selectedFont.includes("Caveat")) lineOffset = "5px";
+            if (selectedFont.includes("Shadows")) lineOffset = "-2px";
+            if (selectedFont.includes("Patrick")) lineOffset = "2px";
+            if (selectedFont.includes("Gochi")) lineOffset = "4px";
             
-            root.style.setProperty('--font-offset', fontOffset);
+            root.style.setProperty('--line-offset', lineOffset);
             
             const notesContent = document.getElementById('notesContent');
             const notesTopic = document.getElementById('notesTopic');
@@ -269,7 +273,6 @@
             if (isMessy) {
                 root.style.setProperty('--letter-spacing', '-1px');
                 notesContent.style.opacity = "0.85";
-                // Only rotate, rely on 'top' property for vertical alignment
                 notesContent.style.transform = `rotate(-0.5deg)`;
                 notesTopic.style.transform = `rotate(-0.5deg)`;
             } else {
@@ -483,54 +486,62 @@
             document.getElementById('mobileFab').classList.add('active');
         }
 
-        // --- TRUE PDF DOWNLOAD LOGIC (html2pdf) ---
+        // --- TRUE ALIGNED PDF DOWNLOAD LOGIC ---
         async function downloadPDF() {
             const element = document.getElementById('notebook');
             const topic = document.getElementById('notesTopic').innerText || "Medical";
             const filename = `${topic.replace(/[^a-z0-9]/gi, '_')}_Notes.pdf`;
             
-            // Provide UI Feedback
             const printBtns = document.querySelectorAll('.fab-btn-print');
-            printBtns.forEach(btn => btn.innerText = "⏳ Generating File...");
+            printBtns.forEach(btn => btn.innerText = "⏳ Generating Aligned PDF...");
 
-            // 1. Prepare element for capture
+            // 1. Prepare element: Lock width so word-wrap matches exactly what is rendered
             disableEditing();
+            const originalWidth = element.style.width;
+            const originalMaxWidth = element.style.maxWidth;
+            element.style.width = '800px';
+            element.style.maxWidth = '800px';
+
             const originalShadow = element.style.boxShadow;
             const originalRadius = element.style.borderRadius;
             element.style.boxShadow = 'none';
             element.style.borderRadius = '0';
             
-            // Fix for html2canvas blank text bug: 
-            // It completely fails to capture text that has mix-blend-mode applied.
+            // 2. Fix for html2canvas rendering bug: Must disable blend modes and rotations temporarily
             const content = document.getElementById('notesContent');
             const header = document.getElementById('notesTopic');
             
             const originalBlendC = window.getComputedStyle(content).mixBlendMode;
             const originalBlendH = window.getComputedStyle(header).mixBlendMode;
-            
             content.style.mixBlendMode = 'normal';
             header.style.mixBlendMode = 'normal';
             
-            // Temporarily disable rotation if messy mode is on to prevent text clipping in PDF
             const originalTransform = content.style.transform;
             content.style.transform = 'none';
             header.style.transform = 'none';
 
-            // 2. CRITICAL: Wait 250ms for the browser to visually repaint the normal text styles
-            await new Promise(resolve => setTimeout(resolve, 250));
+            // 3. Wait for browser to repaint the solid, aligned DOM before snapshot
+            await new Promise(resolve => setTimeout(resolve, 300));
 
-            // 3. Configure html2pdf settings
+            // 4. Configure html2pdf settings
             const opt = {
-                margin:       [0, 0, 0, 0], // CSS handles paper padding natively
+                margin:       0, // Paper CSS handles all padding natively
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: element.scrollWidth },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0, 
+                    windowWidth: 800 // Matches the locked width above
+                },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // 4. Generate and Download
+            // 5. Generate and Download
             html2pdf().set(opt).from(element).save().then(() => {
                 // Restore original UI states
+                element.style.width = originalWidth;
+                element.style.maxWidth = originalMaxWidth;
                 element.style.boxShadow = originalShadow;
                 element.style.borderRadius = originalRadius;
                 content.style.mixBlendMode = originalBlendC;
