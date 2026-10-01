@@ -8,6 +8,9 @@
     <!-- Handwriting Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Shadows+Into+Light&family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
 
+    <!-- HTML to PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root {
             --primary: #2563EB; --primary-hover: #1D4ED8;
@@ -118,30 +121,32 @@
 
         /* --- Utils --- */
         .loader { display: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-top: 1rem; text-align: center;}
-        
         #errorMsg { color: #DC2626; font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 0.5rem; display: none; }
+
+        /* --- PDF Buttons (Desktop & Mobile) --- */
+        .fab-bar {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; padding: 1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 100; justify-content: center;
+        }
+        .fab-btn-print { 
+            background-color: #10B981; padding: 0.75rem 1.5rem; 
+            font-size: 1rem; width: 100%; max-width: 350px; 
+        }
+        .fab-btn-print:hover { background-color: #059669; }
+
+        .desktop-actions { display: flex; justify-content: center; margin-top: 1rem; }
+        .desktop-actions button { display: none; background-color: #10B981; max-width: 400px; }
+        .desktop-actions button:hover { background-color: #059669; }
 
         /* --- Responsive Design --- */
         @media (max-width: 900px) { .app-container { flex-direction: column; align-items: center; } .sidebar { max-width: 100%; } }
         @media (max-width: 600px) {
-            body { padding: 1rem 0.5rem; }
+            body { padding: 1rem 0.5rem; padding-bottom: 90px;}
             .notebook-paper { padding: calc(var(--grid-size) * 2) 1rem 6rem 3rem; }
             .notebook-paper::before { left: 2rem; }
-        }
-
-        /* --- PDF Print Formatting --- */
-        @media print {
-            body { background: none; padding: 0; margin: 0; }
-            .sidebar { display: none !important; }
-            .main-content { max-width: 100%; width: 100%; }
-            .notebook-paper { 
-                box-shadow: none; 
-                border-radius: 0; 
-                display: block !important; 
-                min-height: auto;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+            .desktop-actions { display: none !important; }
+            .fab-bar.active { display: flex; }
         }
     </style>
 </head>
@@ -218,7 +223,16 @@
                 <div id="notesTopic" class="topic-header" contenteditable="false"></div>
                 <div id="notesContent" class="handwriting-text" contenteditable="false"></div>
             </div>
+
+            <div class="desktop-actions" id="desktopActions">
+                <button class="fab-btn-print" onclick="downloadPDF()">🖨️ Save as PDF</button>
+            </div>
         </div>
+    </div>
+
+    <!-- Mobile Action Bar -->
+    <div class="fab-bar" id="mobileFab">
+        <button class="fab-btn-print" onclick="downloadPDF()">🖨️ Save as PDF</button>
     </div>
 
     <script>
@@ -294,7 +308,7 @@
                     }
                 }
             }
-            throw new Error(`The term "${topic}" is too vague. Try to be more specific (e.g. type 'Diabetes mellitus' instead of 'Diabetics').`);
+            throw new Error(`The term "${topic}" is too vague. Try to be more specific.`);
         }
 
         // --- INTELLIGENT SENTENCE EXTRACTION & CATEGORIZATION ---
@@ -453,6 +467,7 @@
             document.getElementById('generateBtn').style.display = 'block';
             document.getElementById('stopBtn').style.display = 'none';
             enableEditing();
+            showActions();
             saveToHistory(topic, text);
         }
 
@@ -464,7 +479,59 @@
             document.getElementById('notesContent').setAttribute('contenteditable', 'false');
             document.getElementById('notesTopic').setAttribute('contenteditable', 'false');
         }
+        function showActions() {
+            document.querySelectorAll('.desktop-actions button').forEach(b => b.style.display = 'block');
+            document.getElementById('mobileFab').classList.add('active');
+        }
 
+        // --- TRUE PDF DOWNLOAD LOGIC (html2pdf) ---
+        function downloadPDF() {
+            const element = document.getElementById('notebook');
+            const topic = document.getElementById('notesTopic').innerText || "Medical";
+            const filename = `${topic.replace(/[^a-z0-9]/gi, '_')}_Notes.pdf`;
+            
+            // Provide UI Feedback
+            const printBtns = document.querySelectorAll('.fab-btn-print');
+            printBtns.forEach(btn => btn.innerText = "⏳ Generating File...");
+
+            // 1. Prepare element for capture (remove shadows/borders, disable editing)
+            disableEditing();
+            const originalShadow = element.style.boxShadow;
+            const originalRadius = element.style.borderRadius;
+            element.style.boxShadow = 'none';
+            element.style.borderRadius = '0';
+            
+            // Temporarily disable mix-blend-mode to avoid html2canvas bugs rendering black blocks
+            const content = document.getElementById('notesContent');
+            const header = document.getElementById('notesTopic');
+            const originalBlendC = content.style.mixBlendMode;
+            const originalBlendH = header.style.mixBlendMode;
+            content.style.mixBlendMode = 'normal';
+            header.style.mixBlendMode = 'normal';
+
+            // 2. Configure html2pdf settings (Splits into standard Letter sized pages)
+            const opt = {
+                margin:       [0, 0, 0, 0], // No margins, let the CSS paper handle padding
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // 3. Generate and Download
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore original UI states
+                element.style.boxShadow = originalShadow;
+                element.style.borderRadius = originalRadius;
+                content.style.mixBlendMode = originalBlendC;
+                header.style.mixBlendMode = originalBlendH;
+                
+                enableEditing();
+                printBtns.forEach(btn => btn.innerText = "🖨️ Save as PDF");
+            });
+        }
+
+        // --- HISTORY LOGIC ---
         function saveToHistory(topic, text) {
             try {
                 let history = JSON.parse(localStorage.getItem('medNotesHistory')) || [];
