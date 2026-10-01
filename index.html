@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe Pro - Smart Web Engine</title>
+    <title>MedScribe Pro - Live Web Engine</title>
     
     <!-- Handwriting Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Shadows+Into+Light&family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
-    
-    <!-- html2canvas for Image Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         :root {
@@ -17,7 +14,11 @@
             --bg: #F1F5F9; --paper: #FDFBF7; 
             --line-color: #94A3B8; --margin-color: #F87171; --ink: #0F172A;
             --font-family: 'Caveat', cursive;
-            --line-height: 2.2rem; --letter-spacing: normal;
+            
+            /* Strict Mathematical Grid for Perfect Alignment */
+            --grid-size: 36px; 
+            --font-offset: -5px; 
+            --letter-spacing: normal;
         }
 
         body {
@@ -71,47 +72,51 @@
         }
         .history-item:hover { background: #E2E8F0; border-color: var(--primary); }
 
-        /* --- Notebook Paper --- */
+        /* --- Perfect Grid Notebook Paper --- */
         .main-content { width: 100%; max-width: 800px; position: relative; }
         
         .notebook-paper {
             background-color: var(--paper); width: 100%; min-height: 1000px;
-            padding: 5rem 2rem 4rem 5rem; position: relative; box-sizing: border-box;
+            padding: calc(var(--grid-size) * 2) 2rem calc(var(--grid-size) * 2) 5.5rem; 
+            position: relative; box-sizing: border-box;
             border-radius: 4px 12px 12px 4px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-            background-image: repeating-linear-gradient( transparent, transparent calc(var(--line-height) - 1px),
-                var(--line-color) calc(var(--line-height) - 1px), var(--line-color) var(--line-height) );
-            background-position: 0 4.8rem; display: none; overflow: hidden;
+            
+            background-image: linear-gradient(
+                transparent calc(var(--grid-size) - 2px), 
+                var(--line-color) calc(var(--grid-size) - 1px), 
+                transparent var(--grid-size)
+            );
+            background-size: 100% var(--grid-size);
+            background-position: 0 0;
+            display: none; overflow: hidden;
         }
 
         .notebook-paper::before {
-            content: ''; position: absolute; top: 0; bottom: 0; left: 3.5rem; width: 4px;
+            content: ''; position: absolute; top: 0; bottom: 0; left: 4rem; width: 4px;
             border-left: 1px solid var(--margin-color); border-right: 1px solid var(--margin-color); opacity: 0.5;
+        }
+
+        .topic-header { 
+            font-size: 2.5rem; font-weight: 700; text-decoration: underline; text-align: center;
+            line-height: calc(var(--grid-size) * 2); 
+            margin: 0; padding: 0;
+            transform: translateY(var(--font-offset));
+            font-family: var(--font-family); color: var(--ink); mix-blend-mode: multiply;
         }
 
         .handwriting-text {
             font-family: var(--font-family); font-size: 1.6rem; color: var(--ink);
-            margin: 0; line-height: var(--line-height); white-space: pre-wrap;
-            mix-blend-mode: multiply; transform: translateY(-6px);
+            line-height: var(--grid-size); 
+            margin: 0; padding: 0; white-space: pre-wrap;
+            mix-blend-mode: multiply; 
+            transform: translateY(var(--font-offset));
             letter-spacing: var(--letter-spacing); transition: all 0.3s ease; word-break: break-word;
         }
         
         .handwriting-text[contenteditable="true"] { outline: none; }
         .handwriting-text[contenteditable="true"]:focus { background-color: rgba(255,255,255,0.4); border-radius: 8px; }
 
-        .topic-header { font-size: 2.5rem; font-weight: 700; text-decoration: underline; margin-bottom: var(--line-height); text-align: center;}
-
-        /* --- Action Bars & Utils --- */
-        .fab-bar {
-            display: none; position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; padding: 1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-            z-index: 100; gap: 1rem; justify-content: space-around;
-        }
-        .fab-bar button { padding: 0.75rem 1rem; font-size: 0.9rem; }
-        .fab-btn-img { background-color: #F59E0B; }
-        .fab-btn-print { background-color: #10B981; }
-
-        .desktop-actions { display: flex; gap: 1rem; margin-top: 1rem; }
-        .desktop-actions button { display: none; }
+        /* --- Utils --- */
         .loader { display: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-top: 1rem; text-align: center;}
         
         #errorMsg { color: #DC2626; font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 0.5rem; display: none; }
@@ -119,17 +124,24 @@
         /* --- Responsive Design --- */
         @media (max-width: 900px) { .app-container { flex-direction: column; align-items: center; } .sidebar { max-width: 100%; } }
         @media (max-width: 600px) {
-            body { padding: 1rem 0.5rem; margin-bottom: 80px; }
-            .notebook-paper { padding: 4rem 1rem 6rem 2.5rem; }
-            .notebook-paper::before { left: 1.5rem; }
-            .desktop-actions { display: none !important; }
-            .fab-bar.active { display: flex; }
+            body { padding: 1rem 0.5rem; }
+            .notebook-paper { padding: calc(var(--grid-size) * 2) 1rem 6rem 3rem; }
+            .notebook-paper::before { left: 2rem; }
         }
+
+        /* --- PDF Print Formatting --- */
         @media print {
             body { background: none; padding: 0; margin: 0; }
-            .sidebar, .fab-bar, .desktop-actions { display: none !important; }
-            .main-content { max-width: 100%; }
-            .notebook-paper { box-shadow: none; border-radius: 0; display: block !important; }
+            .sidebar { display: none !important; }
+            .main-content { max-width: 100%; width: 100%; }
+            .notebook-paper { 
+                box-shadow: none; 
+                border-radius: 0; 
+                display: block !important; 
+                min-height: auto;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 </head>
@@ -140,11 +152,11 @@
         <div class="sidebar">
             <div class="panel">
                 <h2>🩺 MedScribe Pro</h2>
-                <p style="color: #64748B; margin-top: -10px; font-size: 0.85rem;">Smart search extracts notes directly from live medical databases.</p>
+                <p style="color: #64748B; margin-top: -10px; font-size: 0.85rem;">Generates structured clinical notes directly from live Wikipedia medical data.</p>
 
                 <div class="form-group">
                     <label>Disease / Medical Keyword</label>
-                    <input type="text" id="topicName" placeholder="e.g. Diabetics, Heart attack..." maxlength="60">
+                    <input type="text" id="topicName" placeholder="e.g. iron deficiency, B12, Hernia" maxlength="60">
                 </div>
 
                 <div class="form-group">
@@ -202,22 +214,11 @@
 
         <!-- Main Notebook Area -->
         <div class="main-content">
-            <div class="desktop-actions" id="desktopActions">
-                <button class="fab-btn-img" onclick="exportImage()">📸 Save as Image</button>
-                <button class="fab-btn-print" onclick="window.print()">🖨️ Print / PDF</button>
-            </div>
-
             <div id="notebook" class="notebook-paper">
-                <div id="notesTopic" class="handwriting-text topic-header" contenteditable="false"></div>
+                <div id="notesTopic" class="topic-header" contenteditable="false"></div>
                 <div id="notesContent" class="handwriting-text" contenteditable="false"></div>
             </div>
         </div>
-    </div>
-
-    <!-- Mobile Action Bar -->
-    <div class="fab-bar" id="mobileFab">
-        <button class="fab-btn-img" onclick="exportImage()">📸 Save Img</button>
-        <button class="fab-btn-print" onclick="window.print()">🖨️ PDF</button>
     </div>
 
     <script>
@@ -233,29 +234,41 @@
             return temp.innerHTML;
         }
 
-        // Font and CSS update logic
+        // PERFECT ALIGNMENT ENGINE: Corrects natural font baselines to sit exactly on the line
         function updateStyles() {
             const root = document.documentElement;
+            const selectedFont = document.getElementById('fontStyle').value;
+            const isMessy = document.getElementById('chkMessy').checked;
+            
             root.style.setProperty('--ink', document.getElementById('inkColor').value);
-            root.style.setProperty('--font-family', document.getElementById('fontStyle').value);
+            root.style.setProperty('--font-family', selectedFont);
+            
+            let fontOffset = "0px";
+            if (selectedFont.includes("Caveat")) fontOffset = "-5px";
+            if (selectedFont.includes("Shadows")) fontOffset = "2px";
+            if (selectedFont.includes("Patrick")) fontOffset = "-2px";
+            if (selectedFont.includes("Gochi")) fontOffset = "-4px";
+            
+            root.style.setProperty('--font-offset', fontOffset);
             
             const notesContent = document.getElementById('notesContent');
-            if (document.getElementById('chkMessy').checked) {
+            const notesTopic = document.getElementById('notesTopic');
+
+            if (isMessy) {
                 root.style.setProperty('--letter-spacing', '-1px');
-                root.style.setProperty('--line-height', '1.8rem'); 
                 notesContent.style.opacity = "0.85";
-                notesContent.style.transform = "rotate(-0.5deg) translateY(-6px)";
+                notesContent.style.transform = `translateY(calc(var(--font-offset) - 2px)) rotate(-0.5deg)`;
+                notesTopic.style.transform = `translateY(calc(var(--font-offset) - 2px)) rotate(-0.5deg)`;
             } else {
                 root.style.setProperty('--letter-spacing', 'normal');
-                root.style.setProperty('--line-height', '2.2rem');
                 notesContent.style.opacity = "1";
-                notesContent.style.transform = "translateY(-6px)";
+                notesContent.style.transform = `translateY(var(--font-offset))`;
+                notesTopic.style.transform = `translateY(var(--font-offset))`;
             }
         }
 
         // --- SMART LIVE WIKIPEDIA SEARCH LOGIC ---
         async function fetchLiveMedicalData(topic) {
-            // STEP 1: Search for the closest matching medical term (Fuzzy Match)
             const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&utf8=&format=json&origin=*`;
             const searchRes = await fetch(searchUrl);
             if (!searchRes.ok) throw new Error("Failed to connect to Wikipedia API.");
@@ -265,7 +278,6 @@
                 throw new Error(`Could not find any medical topics related to "${topic}". Try checking your spelling.`);
             }
 
-            // STEP 2: Loop through the top 3 results to find an actual article (skip disambiguation pages)
             for (let i = 0; i < Math.min(3, searchData.query.search.length); i++) {
                 let bestMatchTitle = searchData.query.search[i].title;
 
@@ -277,26 +289,17 @@
 
                 if (pageId !== "-1") {
                     const extract = pages[pageId].extract;
-                    
-                    // If it's not a disambiguation page and has enough content, return it!
                     if (!extract.includes("may refer to:") && extract.length > 250) {
-                        return {
-                            text: extract,
-                            actualTitle: bestMatchTitle // We return the correct title to fix the UI!
-                        };
+                        return { text: extract, actualTitle: bestMatchTitle };
                     }
                 }
             }
-            
-            throw new Error(`The term "${topic}" is too vague and refers to multiple things. Try to be more specific.`);
+            throw new Error(`The term "${topic}" is too vague. Try to be more specific (e.g. type 'Diabetes mellitus' instead of 'Diabetics').`);
         }
 
         // --- INTELLIGENT SENTENCE EXTRACTION & CATEGORIZATION ---
         function extractNotesFromText(rawText, actualTitle, activeSections) {
-            // Remove Wikipedia section headers (e.g., "== Signs and symptoms ==")
             let cleanText = rawText.replace(/==+.*?==+/g, ''); 
-            
-            // Split into sentences using punctuation followed by capital letters
             let sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [];
             sentences = sentences.map(s => s.trim()).filter(s => s.length > 15);
             
@@ -307,20 +310,16 @@
 
             const titleLower = actualTitle.toLowerCase();
 
-            // Analyze every sentence and categorize using NLP keywords
             for (let i = 0; i < sentences.length; i++) {
                 let noteChunk = sentences[i];
                 let lowerNote = noteChunk.toLowerCase();
 
-                // Grab next sentence for context if current is too short
                 if (i + 1 < sentences.length && sentences[i+1].length < 100) {
                     noteChunk += " " + sentences[i+1];
                     i++; 
                 }
 
-                // Categorization Logic
                 if (activeSections.includes("Definition") && i < 5) {
-                    // First few sentences of a wiki article usually define the condition
                     extractedData["Definition"].push(noteChunk);
                 } else if (activeSections.includes("Pathophysiology") && lowerNote.match(/\b(pathology|cause|mechan|etiolog|due to|result in|mutat|genetic)\b/)) {
                     extractedData["Pathophysiology"].push(noteChunk);
@@ -333,22 +332,19 @@
                 } else if (activeSections.includes("Complications") && lowerNote.match(/\b(complicat|risk|fatal|death|prognos|surviv|severe)\b/)) {
                     extractedData["Complications"].push(noteChunk);
                 } else {
-                    // General fallback if it contains the actual corrected title
                     if (lowerNote.includes(titleLower)) {
                         extractedData["General"].push(noteChunk);
                     }
                 }
             }
 
-            // Format into final notebook string
             let finalOutput = "";
             let secCount = 1;
 
             activeSections.forEach(section => {
-                let sectionData = [...new Set(extractedData[section])]; // Deduplicate
+                let sectionData = [...new Set(extractedData[section])]; 
                 if (sectionData.length > 0) {
                     finalOutput += `${secCount++}. ${section.toUpperCase()}\n`;
-                    // Limit to 4 most relevant bullet points per section to fit nicely on the page
                     sectionData.slice(0, 4).forEach(point => { 
                         finalOutput += `• ${point}\n`;
                     });
@@ -356,7 +352,6 @@
                 }
             });
 
-            // Fallback: If keyword sections were empty, dump general facts
             if (finalOutput.trim() === "") {
                 let generalData = [...new Set(extractedData["General"])];
                 if (generalData.length > 0) {
@@ -379,8 +374,6 @@
             if (topicInput.length > 60) topicInput = topicInput.substring(0, 60);
 
             const topic = sanitizeString(topicInput);
-
-            // Get active sections
             const checkboxes = document.querySelectorAll('.checkbox-grid input[type="checkbox"]:checked');
             const activeSections = Array.from(checkboxes).map(cb => cb.value);
 
@@ -388,7 +381,6 @@
                 alert("Please check at least one section."); return;
             }
 
-            // Lock UI & Setup Load State
             document.getElementById('generateBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'block';
             document.getElementById('loader').style.display = 'block';
@@ -398,27 +390,23 @@
             isTyping = true;
 
             try {
-                // 1. Fetch live text and get the CORRECTED title from the smart search
                 const result = await fetchLiveMedicalData(topic);
                 const rawLiveText = result.text;
-                const correctedTitle = result.actualTitle; // e.g. "Diabetics" -> "Diabetes"
+                const correctedTitle = result.actualTitle; 
                 
-                // 2. Extract and format the notes using the corrected title
                 let extractedNotes = extractNotesFromText(rawLiveText, correctedTitle, activeSections);
 
                 if (!extractedNotes) {
                     throw new Error(`Could not generate structured clinical notes for "${correctedTitle}". Try a more specific term.`);
                 }
 
-                // 3. Append Final References Section (Live Source Citation)
                 extractedNotes += `\n[REFERENCES & EVIDENCE]\n`;
                 extractedNotes += `1. Data extracted live from Open Medical Databases via Wikipedia API.\n`;
                 extractedNotes += `2. Source URL: https://en.wikipedia.org/wiki/${encodeURIComponent(correctedTitle)}`;
 
                 currentFullText = extractedNotes;
 
-                // 4. Update UI with the CORRECTED title
-                document.getElementById('topicName').value = correctedTitle; // Auto-correct the input box
+                document.getElementById('topicName').value = correctedTitle; 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('notebook').style.display = 'block';
                 document.getElementById('notesTopic').innerText = correctedTitle;
@@ -426,7 +414,6 @@
                 const contentDiv = document.getElementById('notesContent');
                 contentDiv.innerText = ""; 
 
-                // 5. Animate typing
                 const words = currentFullText.split(/(?= |\n)/);
                 let i = 0; let buildingText = "";
                 
@@ -436,7 +423,7 @@
                         buildingText += words[i];
                         contentDiv.textContent = buildingText; 
                         i++;
-                        typingTimeout = setTimeout(typeWriter, 12); // Typing speed
+                        typingTimeout = setTimeout(typeWriter, 12); 
                     } else {
                         finishGeneration(correctedTitle, currentFullText);
                     }
@@ -466,7 +453,6 @@
             document.getElementById('generateBtn').style.display = 'block';
             document.getElementById('stopBtn').style.display = 'none';
             enableEditing();
-            showActions();
             saveToHistory(topic, text);
         }
 
@@ -477,36 +463,6 @@
         function disableEditing() {
             document.getElementById('notesContent').setAttribute('contenteditable', 'false');
             document.getElementById('notesTopic').setAttribute('contenteditable', 'false');
-        }
-        function showActions() {
-            document.querySelectorAll('.desktop-actions button').forEach(b => b.style.display = 'block');
-            document.getElementById('mobileFab').classList.add('active');
-        }
-
-        function exportImage() {
-            const notebook = document.getElementById('notebook');
-            const content = document.getElementById('notesContent');
-            const header = document.getElementById('notesTopic');
-            
-            // Hide cursor/selection before taking screenshot
-            disableEditing();
-            
-            const originalBlend = content.style.mixBlendMode;
-            content.style.mixBlendMode = 'normal';
-            window.scrollTo(0,0); 
-
-            html2canvas(notebook, { scale: 2, useCORS: true }).then(canvas => {
-                let link = document.createElement('a');
-                link.download = `${header.innerText.replace(/[^a-z0-9]/gi, '_')}_Notes.png`; 
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-                
-                content.style.mixBlendMode = originalBlend;
-                enableEditing();
-            }).catch(err => {
-                alert("Failed to generate image. Please try 'Print / PDF' instead.");
-                enableEditing();
-            });
         }
 
         function saveToHistory(topic, text) {
